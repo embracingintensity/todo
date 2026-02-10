@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Aurora">
+    <meta name="description" content="Simple, focused to-do lists with endless collapsible subtasks">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkF1cm9yYSBUby1EbyIsCiAgInNob3J0X25hbWUiOiAiQXVyb3JhIiwKICAic3RhcnRfdXJsIjogIi4vIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjZjVmNWY1IiwKICAidGhlbWVfY29sb3IiOiAiIzRDQUY1MCIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbCwlM0NzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB2aWV3Qm94PScwIDAgMTAwIDEwMCclM0UlM0NyZWN0IHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyBmaWxsPSclMjM0Q0FGNTA nLyUzRSUzQ3RleHQgeD0nNTAnIHk9JzUwJyBmb250LXNpemU9JzYwJyB0ZXh0LWFuY2hvcj0nbWlkZGxlJyBkb21pbmFudC1iYXNlbGluZT0nbWlkZGxlJyBmaWxsPSd3aGl0ZSclM0UlRTIlOUMlQTglM0MvdGV4dCUzRSUzQy9zdmclM0UiLAogICAgICAic2l6ZXMiOiAiNTEyeDUxMiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXQp9">
+    <title>Aurora To-Do</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            line-height: 1.4;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .demo-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #666;
+            margin-left: auto;
+        }
+
+        .demo-toggle input[type="checkbox"] {
+            width: 40px;
+            height: 20px;
+            cursor: pointer;
+            appearance: none;
+            background: #ddd;
+            border-radius: 10px;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .demo-toggle input[type="checkbox"]:checked {
+            background: #4CAF50;
+        }
+
+        .demo-toggle input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            top: 2px;
+            left: 2px;
+            transition: left 0.3s;
+        }
+
+        .demo-toggle input[type="checkbox"]:checked::before {
+            left: 22px;
+        }
+
+        .demo-mode-banner {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #856404;
+            display: none;
+        }
+
+        .demo-mode-banner.active {
+            display: block;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            color: #666;
+        }
+
+        .tab:hover {
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .tab.active {
+            color: #333;
+            border-bottom-color: #4CAF50;
+            font-weight: 500;
+        }
+
+        .tab-controls {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+            align-items: center;
+        }
+
+        .tab-controls button {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #f0f0f0;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Icon-only buttons that reveal text on hover */
+        button .btn-text {
+            display: none;
+            margin-left: 4px;
+        }
+
+        button:hover .btn-text {
+            display: inline;
+        }
+
+        button .btn-icon {
+            display: inline;
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            margin: 2px 0;
+            position: relative;
+        }
+
+        .task-row {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 4px;
+            gap: 6px;
+            transition: background 0.15s;
+        }
+
+        .task-row:hover {
+            background: #f8f8f8;
+        }
+
+        .task-row.selected {
+            background: #e3f2fd;
+        }
+
+        .indent {
+            width: 20px;
+            flex-shrink: 0;
+        }
+
+        .collapse-btn {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        .collapse-btn:hover {
+            background: #e0e0e0;
+            border-radius: 2px;
+        }
+
+        .collapse-btn.empty {
+            visibility: hidden;
+        }
+
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .task-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .task-text {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 14px;
+            padding: 2px 4px;
+            outline: none;
+            min-width: 100px;
+        }
+
+        .task-text:focus {
+            background: white;
+            border: 1px solid #4CAF50;
+            border-radius: 2px;
+        }
+
+        .task-text.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        /* Color code task text by due date */
+        .task-text.text-overdue {
+            color: #8b0000;
+            font-weight: 600;
+        }
+
+        .task-text.text-today {
+            color: #ff0000;
+            font-weight: 600;
+        }
+
+        .task-text.text-tomorrow {
+            color: #ff8c00;
+            font-weight: 500;
+        }
+
+        .task-text.text-week {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .task-text.text-month {
+            color: #007bff;
+        }
+
+        .task-text.text-future {
+            color: #6f42c1;
+        }
+
+        .task-due-date {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        /* Color code date numbers by due date */
+        .task-due-date.date-overdue {
+            color: #8b0000;
+            font-weight: 600;
+        }
+
+        .task-due-date.date-today {
+            color: #ff0000;
+            font-weight: 600;
+        }
+
+        .task-due-date.date-tomorrow {
+            color: #ff8c00;
+            font-weight: 500;
+        }
+
+        .task-due-date.date-week {
+            color: #28a745;
+            font-weight: 500;
+        }
+
+        .task-due-date.date-month {
+            color: #007bff;
+        }
+
+        .task-due-date.date-future {
+            color: #6f42c1;
+        }
+        
+        .task-due-date.date-none {
+            color: #999;
+        }
+
+        .task-time {
+            font-size: 12px;
+            color: #666;
+            padding: 2px 6px;
+            background: #f5f5f5;
+            border-radius: 3px;
+            whitespace: nowrap;
+            flex-shrink: 0;
+        }
+
+        .task-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .date-input, .time-input, .icon-input {
+            font-size: 11px;
+            padding: 2px 4px;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+            max-width: 100px;
+        }
+
+        .task-actions {
+            opacity: 0;
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .task-row:hover .task-actions {
+            opacity: 1;
+        }
+
+        .task-actions button {
+            padding: 2px 6px;
+            font-size: 11px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 2px;
+        }
+
+        .task-actions button:hover {
+            background: #e0e0e0;
+        }
+
+        .subtasks {
+            list-style: none;
+            margin-left: 20px;
+        }
+
+        .subtasks.collapsed {
+            display: none;
+        }
+
+        .add-task-btn {
+            margin: 10px 0;
+            color: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        .add-task-btn:hover {
+            background: #f1f8f4;
+        }
+
+        .export-import {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .keyboard-shortcuts {
+            display: none; /* Hidden - will be part of task list instead */
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .task-time, .task-due-date {
+                font-size: 10px;
+            }
+            
+            .controls {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span>✨ Aurora</span>
+            <div class="demo-toggle">
+                <span>Demo Mode</span>
+                <input type="checkbox" id="demoModeToggle" onchange="toggleDemoMode()">
+            </div>
+        </h1>
+        
+        <div class="demo-mode-banner" id="demoModeBanner">
+            📺 Demo Mode Active - Viewing sample data. Toggle off to return to your tasks.
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchList(0)">📝 Personal</button>
+            <button class="tab" onclick="switchList(1)">💼 Work</button>
+            <button class="tab" onclick="switchList(2)">🏠 Home</button>
+            <button class="tab" onclick="switchList(3)">🎯 Projects</button>
+            <div class="tab-controls">
+                <button onclick="addNewList()"><span class="btn-icon">+</span><span class="btn-text">List</span></button>
+                <button onclick="renameCurrentList()"><span class="btn-icon">✏️</span><span class="btn-text">Rename</span></button>
+                <button onclick="deleteCurrentList()"><span class="btn-icon">🗑️</span><span class="btn-text">Delete List</span></button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="addRootTask()"><span class="btn-icon">+</span><span class="btn-text">Add Task</span></button>
+            <button onclick="copySelected()"><span class="btn-icon">📋</span><span class="btn-text">Copy Branch</span></button>
+            <button onclick="pasteTask()"><span class="btn-icon">📄</span><span class="btn-text">Paste</span></button>
+            <button onclick="deleteSelected()"><span class="btn-icon">🗑️</span><span class="btn-text">Delete</span></button>
+            <button onclick="deleteCompleted()"><span class="btn-icon">✓</span><span class="btn-text">Delete Completed</span></button>
+        </div>
+
+        <ul id="taskList" class="task-list"></ul>
+
+        <div class="export-import">
+            <h3>Data Management</h3>
+            <div class="controls">
+                <button onclick="exportData()"><span class="btn-icon">💾</span><span class="btn-text">Export Data</span></button>
+                <button onclick="importData()"><span class="btn-icon">📂</span><span class="btn-text">Import Data</span></button>
+                <button onclick="clearAll()"><span class="btn-icon">🗑️</span><span class="btn-text">Clear All</span></button>
+                <button onclick="loadDemoData()"><span class="btn-icon">📝</span><span class="btn-text">Load Demo</span></button>
+                <button onclick="resetEverything()" style="border-color: #ff6b6b;"><span class="btn-icon">🔄</span><span class="btn-text">Reset Everything</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure
+        let lists = [
+            { name: '📝 Personal', tasks: [] },
+            { name: '💼 Work', tasks: [] },
+            { name: '🏠 Home', tasks: [] },
+            { name: '🎯 Projects', tasks: [] }
+        ];
+        let currentListIndex = 0;
+        let selectedTask = null;
+        let clipboard = null;
+        let nextId = 1;
+        
+        // Demo mode
+        let demoMode = false;
+        let realLists = null; // Store real data when in demo mode
+        let realListIndex = 0;
+
+        // Get current list's tasks
+        function getCurrentTasks() {
+            return lists[currentListIndex].tasks;
+        }
+
+        function setCurrentTasks(tasks) {
+            lists[currentListIndex].tasks = tasks;
+        }
+        
+        // Demo mode toggle
+        function toggleDemoMode() {
+            const toggle = document.getElementById('demoModeToggle');
+            const banner = document.getElementById('demoModeBanner');
+            demoMode = toggle.checked;
+            
+            if (demoMode) {
+                // Save real data
+                realLists = JSON.parse(JSON.stringify(lists));
+                realListIndex = currentListIndex;
+                
+                // Load demo data
+                lists = [
+                    { name: '📝 Personal', tasks: [] },
+                    { name: '💼 Work', tasks: [] },
+                    { name: '🏠 Home', tasks: [] },
+                    { name: '🎯 Projects', tasks: [] }
+                ];
+                currentListIndex = 0;
+                initDemoData();
+                
+                banner.classList.add('active');
+            } else {
+                // Restore real data
+                if (realLists) {
+                    lists = realLists;
+                    currentListIndex = realListIndex;
+                    realLists = null;
+                }
+                
+                banner.classList.remove('active');
+            }
+            
+            renderTabs();
+            renderTasks();
+        }
+
+        // Initialize
+        function init() {
+            loadData();
+            renderTasks();
+            setInterval(saveData, 2000); // Auto-save every 2 seconds
+        }
+
+        // Task management
+        function createTask(text = '', parent = null) {
+            const task = {
+                id: nextId++,
+                text: text,
+                completed: false,
+                isReference: false, // New: for non-task items (bullets instead of checkboxes)
+                dueDate: null,
+                timeEstimate: null,
+                icon: null,
+                subtasks: [],
+                collapsed: false
+            };
+            
+            if (parent) {
+                parent.subtasks.push(task);
+            } else {
+                getCurrentTasks().push(task);
+            }
+            
+            return task;
+        }
+
+        function addRootTask() {
+            createTask('New task');
+            renderTasks();
+            saveData();
+        }
+
+        function addSubtask(parentTask) {
+            createTask('New subtask', parentTask);
+            parentTask.collapsed = false;
+            renderTasks();
+            saveData();
+        }
+
+        function deleteTask(taskToDelete, taskList = null) {
+            if (taskList === null) {
+                taskList = getCurrentTasks();
+            }
+            
+            const index = taskList.findIndex(t => t.id === taskToDelete.id);
+            if (index !== -1) {
+                taskList.splice(index, 1);
+                return true;
+            }
+            
+            for (let task of taskList) {
+                if (deleteTask(taskToDelete, task.subtasks)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function deleteSelected() {
+            if (selectedTask && confirm('Delete this task and all subtasks?')) {
+                deleteTask(selectedTask);
+                selectedTask = null;
+                renderTasks();
+                saveData();
+            }
+        }
+
+        function deleteCompleted() {
+            if (!confirm('Delete all completed tasks? This cannot be undone!')) {
+                return;
+            }
+            
+            function removeCompleted(taskList) {
+                for (let i = taskList.length - 1; i >= 0; i--) {
+                    const task = taskList[i];
+                    // Recursively remove completed subtasks first
+                    removeCompleted(task.subtasks);
+                    // Remove this task if completed
+                    if (task.completed) {
+                        taskList.splice(i, 1);
+                    }
+                }
+            }
+            
+            removeCompleted(getCurrentTasks());
+            selectedTask = null;
+            renderTasks();
+            saveData();
+        }
+
+        // List management
+        function switchList(index) {
+            if (index < 0 || index >= lists.length) return;
+            
+            currentListIndex = index;
+            selectedTask = null;
+            
+            // Update tab styling
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach((tab, i) => {
+                if (i < lists.length) {
+                    tab.classList.toggle('active', i === index);
+                }
+            });
+            
+            renderTasks();
+        }
+
+        function addNewList() {
+            const name = prompt('Enter list name:', 'New List');
+            if (name) {
+                lists.push({ name: name, tasks: [] });
+                renderTabs();
+                switchList(lists.length - 1);
+                saveData();
+            }
+        }
+
+        function renameCurrentList() {
+            const name = prompt('Enter new name:', lists[currentListIndex].name);
+            if (name) {
+                lists[currentListIndex].name = name;
+                renderTabs();
+                saveData();
+            }
+        }
+
+        function deleteCurrentList() {
+            if (lists.length <= 1) {
+                alert('Cannot delete the last list!');
+                return;
+            }
+            
+            if (confirm(`Delete "${lists[currentListIndex].name}" and all its tasks?`)) {
+                lists.splice(currentListIndex, 1);
+                currentListIndex = Math.max(0, currentListIndex - 1);
+                renderTabs();
+                switchList(currentListIndex);
+                saveData();
+            }
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.querySelector('.tabs');
+            const oldControls = tabsContainer.querySelector('.tab-controls');
+            
+            // Clear existing tabs but keep controls
+            tabsContainer.innerHTML = '';
+            
+            // Add list tabs dynamically
+            lists.forEach((list, index) => {
+                const tab = document.createElement('button');
+                tab.className = 'tab';
+                if (index === currentListIndex) {
+                    tab.classList.add('active');
+                }
+                tab.textContent = list.name;
+                tab.onclick = () => switchList(index);
+                tabsContainer.appendChild(tab);
+            });
+            
+            // Re-add controls
+            const controls = document.createElement('div');
+            controls.className = 'tab-controls';
+            controls.innerHTML = `
+                <button onclick="addNewList()"><span class="btn-icon">+</span><span class="btn-text">List</span></button>
+                <button onclick="renameCurrentList()"><span class="btn-icon">✏️</span><span class="btn-text">Rename</span></button>
+                <button onclick="deleteCurrentList()"><span class="btn-icon">🗑️</span><span class="btn-text">Delete List</span></button>
+            `;
+            tabsContainer.appendChild(controls);
+        }
+
+        function findTask(id, taskList = null) {
+            if (taskList === null) {
+                taskList = getCurrentTasks();
+            }
+            
+            for (let task of taskList) {
+                if (task.id === id) return task;
+                const found = findTask(id, task.subtasks);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function copyTaskTree(task) {
+            return {
+                text: task.text,
+                completed: task.completed,
+                dueDate: task.dueDate,
+                timeEstimate: task.timeEstimate,
+                icon: task.icon,
+                subtasks: task.subtasks.map(st => copyTaskTree(st)),
+                collapsed: false
+            };
+        }
+
+        function copySelected() {
+            if (selectedTask) {
+                clipboard = copyTaskTree(selectedTask);
+                alert('Task branch copied to clipboard!');
+            } else {
+                alert('Please select a task first by clicking on it.');
+            }
+        }
+
+        function pasteTask() {
+            if (!clipboard) {
+                alert('Nothing to paste. Copy a task first.');
+                return;
+            }
+            
+            const newTask = JSON.parse(JSON.stringify(clipboard));
+            assignNewIds(newTask);
+            
+            if (selectedTask) {
+                selectedTask.subtasks.push(newTask);
+                selectedTask.collapsed = false;
+            } else {
+                getCurrentTasks().push(newTask);
+            }
+            
+            renderTasks();
+            saveData();
+        }
+
+        function assignNewIds(task) {
+            task.id = nextId++;
+            task.subtasks.forEach(st => assignNewIds(st));
+        }
+
+        // UI Rendering
+        function renderTasks() {
+            const taskListEl = document.getElementById('taskList');
+            taskListEl.innerHTML = '';
+            getCurrentTasks().forEach(task => {
+                taskListEl.appendChild(renderTask(task, 0));
+            });
+        }
+
+        function renderTask(task, depth) {
+            const li = document.createElement('li');
+            li.className = 'task-item';
+            
+            const row = document.createElement('div');
+            row.className = 'task-row';
+            if (selectedTask && selectedTask.id === task.id) {
+                row.classList.add('selected');
+            }
+            
+            row.onclick = (e) => {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+                    selectedTask = task;
+                    renderTasks();
+                }
+            };
+            
+            // Indentation
+            for (let i = 0; i < depth; i++) {
+                const indent = document.createElement('span');
+                indent.className = 'indent';
+                row.appendChild(indent);
+            }
+            
+            // Collapse button
+            const collapseBtn = document.createElement('button');
+            collapseBtn.className = 'collapse-btn';
+            if (task.subtasks.length > 0) {
+                collapseBtn.textContent = task.collapsed ? '▶' : '▼';
+                collapseBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    task.collapsed = !task.collapsed;
+                    renderTasks();
+                    saveData();
+                };
+            } else {
+                collapseBtn.classList.add('empty');
+            }
+            row.appendChild(collapseBtn);
+            
+            // Checkbox or Bullet
+            if (task.isReference) {
+                // Show bullet for reference items
+                const bullet = document.createElement('span');
+                bullet.style.width = '16px';
+                bullet.style.height = '16px';
+                bullet.style.display = 'flex';
+                bullet.style.alignItems = 'center';
+                bullet.style.justifyContent = 'center';
+                bullet.style.fontSize = '12px';
+                bullet.style.color = '#666';
+                bullet.style.cursor = 'pointer';
+                bullet.textContent = '•';
+                bullet.title = 'Click to convert to checkbox';
+                bullet.onclick = () => {
+                    task.isReference = false;
+                    renderTasks();
+                    saveData();
+                };
+                row.appendChild(bullet);
+            } else {
+                // Show checkbox for tasks
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = task.completed;
+                checkbox.title = 'Right-click to convert to bullet';
+                checkbox.onchange = () => {
+                    task.completed = checkbox.checked;
+                    renderTasks();
+                    saveData();
+                };
+                checkbox.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    task.isReference = true;
+                    renderTasks();
+                    saveData();
+                };
+                row.appendChild(checkbox);
+            }
+            
+            // Task content
+            const content = document.createElement('div');
+            content.className = 'task-content';
+            
+            // Icon
+            if (task.icon) {
+                const icon = document.createElement('span');
+                icon.className = 'task-icon';
+                icon.textContent = task.icon;
+                content.appendChild(icon);
+            }
+            
+            // Text
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.className = 'task-text';
+            if (task.completed) {
+                textInput.classList.add('completed');
+            } else {
+                // Add color class based on due date
+                const colorClass = getDueDateTextClass(task.dueDate);
+                if (colorClass) {
+                    textInput.classList.add(colorClass);
+                }
+            }
+            textInput.value = task.text;
+            textInput.onchange = () => {
+                task.text = textInput.value;
+                saveData();
+            };
+            textInput.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addSubtask(task);
+                } else if (e.key === 'Tab') {
+                    e.preventDefault();
+                    addSubtask(task);
+                }
+            };
+            content.appendChild(textInput);
+            
+            // Time estimate
+            if (task.timeEstimate) {
+                const time = document.createElement('span');
+                time.className = 'task-time';
+                time.textContent = `⏱️ ${task.timeEstimate}`;
+                content.appendChild(time);
+            }
+            
+            // Due date
+            const dateColorClass = getDueDateTextClass(task.dueDate);
+            const due = document.createElement('span');
+            due.className = 'task-due-date';
+            if (dateColorClass) {
+                // Convert text-overdue to date-overdue, etc.
+                due.classList.add(dateColorClass.replace('text-', 'date-'));
+            } else {
+                due.classList.add('date-none');
+            }
+            due.textContent = task.dueDate || 'no date';
+            content.appendChild(due);
+            
+            row.appendChild(content);
+            
+            // Actions
+            const actions = document.createElement('div');
+            actions.className = 'task-actions';
+            
+            const addSubBtn = document.createElement('button');
+            addSubBtn.textContent = '+ Sub';
+            addSubBtn.onclick = (e) => {
+                e.stopPropagation();
+                addSubtask(task);
+            };
+            actions.appendChild(addSubBtn);
+            
+            const setDateBtn = document.createElement('button');
+            setDateBtn.textContent = '📅';
+            setDateBtn.title = 'Set due date';
+            setDateBtn.onclick = (e) => {
+                e.stopPropagation();
+                
+                // Create date input overlay
+                const dateInput = document.createElement('input');
+                dateInput.type = 'date';
+                dateInput.value = task.dueDate || '';
+                dateInput.style.position = 'absolute';
+                dateInput.style.zIndex = '1000';
+                
+                // Position it near the button
+                const rect = setDateBtn.getBoundingClientRect();
+                dateInput.style.left = rect.left + 'px';
+                dateInput.style.top = (rect.bottom + 5) + 'px';
+                
+                dateInput.onchange = () => {
+                    task.dueDate = dateInput.value || null;
+                    renderTasks();
+                    saveData();
+                    dateInput.remove();
+                };
+                
+                dateInput.onblur = () => {
+                    setTimeout(() => dateInput.remove(), 200);
+                };
+                
+                document.body.appendChild(dateInput);
+                dateInput.focus();
+                dateInput.showPicker();
+            };
+            actions.appendChild(setDateBtn);
+            
+            const setTimeBtn = document.createElement('button');
+            setTimeBtn.textContent = '⏱️';
+            setTimeBtn.onclick = (e) => {
+                e.stopPropagation();
+                const time = prompt('Time estimate (e.g., 2h, 30m):', task.timeEstimate || '');
+                if (time !== null) {
+                    task.timeEstimate = time || null;
+                    renderTasks();
+                    saveData();
+                }
+            };
+            actions.appendChild(setTimeBtn);
+            
+            const setIconBtn = document.createElement('button');
+            setIconBtn.textContent = '✨';
+            setIconBtn.onclick = (e) => {
+                e.stopPropagation();
+                const icon = prompt('Icon (emoji or symbol):', task.icon || '');
+                if (icon !== null) {
+                    task.icon = icon || null;
+                    renderTasks();
+                    saveData();
+                }
+            };
+            actions.appendChild(setIconBtn);
+            
+            row.appendChild(actions);
+            li.appendChild(row);
+            
+            // Subtasks
+            if (task.subtasks.length > 0) {
+                const subtaskList = document.createElement('ul');
+                subtaskList.className = 'subtasks';
+                if (task.collapsed) {
+                    subtaskList.classList.add('collapsed');
+                }
+                task.subtasks.forEach(subtask => {
+                    subtaskList.appendChild(renderTask(subtask, depth + 1));
+                });
+                li.appendChild(subtaskList);
+            }
+            
+            return li;
+        }
+
+        function getDueDateTextClass(dueDate) {
+            if (!dueDate) return null;
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const due = new Date(dueDate);
+            due.setHours(0, 0, 0, 0);
+            
+            const diffDays = Math.floor((due - today) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 0) return 'text-overdue';      // Past due - dark red text
+            if (diffDays === 0) return 'text-today';       // Today - red text
+            if (diffDays === 1) return 'text-tomorrow';    // Tomorrow - orange text
+            if (diffDays <= 7) return 'text-week';         // 2-7 days - green text
+            if (diffDays <= 30) return 'text-month';       // 8-30 days - blue text
+            return 'text-future';                          // 30+ days - purple text
+        }
+
+        // Data persistence
+        function saveData() {
+            // Don't save if in demo mode
+            if (demoMode) return;
+            
+            localStorage.setItem('aurora-tasks', JSON.stringify({
+                lists: lists,
+                currentListIndex: currentListIndex,
+                nextId: nextId
+            }));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('aurora-tasks');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    
+                    // Handle new format with lists
+                    if (data.lists) {
+                        lists = data.lists;
+                        currentListIndex = data.currentListIndex || 0;
+                        nextId = data.nextId || 1;
+                        
+                        // Ensure we have at least the 3 basic lists (Personal, Work, Home)
+                        const defaultLists = [
+                            { name: '📝 Personal', exists: false },
+                            { name: '💼 Work', exists: false },
+                            { name: '🏠 Home', exists: false }
+                        ];
+                        
+                        // Check which defaults already exist
+                        for (let def of defaultLists) {
+                            if (lists.some(l => l.name === def.name)) {
+                                def.exists = true;
+                            }
+                        }
+                        
+                        // Add missing defaults
+                        for (let def of defaultLists) {
+                            if (!def.exists) {
+                                lists.push({ name: def.name, tasks: [] });
+                            }
+                        }
+                    }
+                    // Handle old format (migrate to new)
+                    else if (data.tasks) {
+                        lists = [
+                            { name: '📝 Personal', tasks: data.tasks },
+                            { name: '💼 Work', tasks: [] },
+                            { name: '🏠 Home', tasks: [] }
+                        ];
+                        currentListIndex = 0;
+                        nextId = data.nextId || 1;
+                        saveData(); // Save migrated data
+                    }
+                } catch (e) {
+                    console.error('Error loading data:', e);
+                    initDefaultLists();
+                }
+            } else {
+                // Try loading from old Bonsai key for migration
+                const oldSaved = localStorage.getItem('bonsai-tasks');
+                if (oldSaved) {
+                    try {
+                        const data = JSON.parse(oldSaved);
+                        if (data.lists) {
+                            lists = data.lists;
+                            currentListIndex = data.currentListIndex || 0;
+                            nextId = data.nextId || 1;
+                        } else if (data.tasks) {
+                            lists = [
+                                { name: '📝 Personal', tasks: data.tasks },
+                                { name: '💼 Work', tasks: [] },
+                                { name: '🏠 Home', tasks: [] }
+                            ];
+                            currentListIndex = 0;
+                            nextId = data.nextId || 1;
+                        }
+                        saveData(); // Save to new key
+                        localStorage.removeItem('bonsai-tasks'); // Clean up old key
+                    } catch (e) {
+                        initDefaultLists();
+                    }
+                } else {
+                    initDefaultLists();
+                }
+            }
+            
+            renderTabs();
+        }
+
+        function initDefaultLists() {
+            lists = [
+                { name: '📝 Personal', tasks: [] },
+                { name: '💼 Work', tasks: [] },
+                { name: '🏠 Home', tasks: [] },
+                { name: '🎯 Projects', tasks: [] }
+            ];
+            currentListIndex = 0;
+            // Add demo data to Personal list
+            initDemoData();
+        }
+
+        function initDemoData() {
+                // Demo data
+                const tips = createTask('💡 Tips & Instructions (click to expand)');
+                tips.isReference = true;
+                tips.icon = '📖';
+                tips.collapsed = true;
+                
+                const tip1 = createTask('Click task text to edit', tips);
+                tip1.isReference = true;
+                const tip2 = createTask('Click a task row to select it (blue highlight) for copy/paste/delete', tips);
+                tip2.isReference = true;
+                const tip3 = createTask('Right-click checkbox to convert to bullet (•) for reference items', tips);
+                tip3.isReference = true;
+                const tip4 = createTask('Click bullet to convert back to checkbox for tasks', tips);
+                tip4.isReference = true;
+                const tip5 = createTask('Use Tab or Enter to create subtasks', tips);
+                tip5.isReference = true;
+                const tip6 = createTask('Triangle (▶/▼) collapses/expands subtasks', tips);
+                tip6.isReference = true;
+                const tip7 = createTask('Hover over task to see action buttons (📅 date, ⏱️ time, ✨ icon, + Sub)', tips);
+                tip7.isReference = true;
+                const tip8 = createTask('Date colors (task text changes color): Dark Red=overdue, Red=today, Orange=tomorrow, Green=2-7 days, Blue=8-30 days, Purple=30+ days', tips);
+                tip8.isReference = true;
+                const tip9 = createTask('Data saves automatically in your browser', tips);
+                tip9.isReference = true;
+                
+                const task1 = createTask('Welcome to Aurora! ✨');
+                task1.dueDate = new Date().toISOString().split('T')[0];
+                task1.icon = '🌟';
+                
+                const sub1 = createTask('Click the triangle (▶) to collapse this', task1);
+                createTask('Click text to edit', task1);
+                createTask('Use buttons on hover for date/time/icon', task1);
+                createTask('Press Tab or Enter to create subtasks', task1);
+                
+                const task2 = createTask('Try copy & paste');
+                task2.timeEstimate = '5m';
+                createTask('Select a task by clicking it', task2);
+                createTask('Click "Copy Branch" to copy', task2);
+                createTask('Click "Paste" to duplicate', task2);
+                
+                const task3 = createTask('Color-coded due dates - see all 6 colors below');
+                
+                const overdue = createTask('This is OVERDUE (dark red)', task3);
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                overdue.dueDate = yesterday.toISOString().split('T')[0];
+                
+                const today = createTask('This is DUE TODAY (red)', task3);
+                today.dueDate = new Date().toISOString().split('T')[0];
+                
+                const tomorrow = createTask('This is DUE TOMORROW (orange)', task3);
+                const tomorrowDate = new Date();
+                tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+                tomorrow.dueDate = tomorrowDate.toISOString().split('T')[0];
+                
+                const weekOut = createTask('Due in 2-7 days (green)', task3);
+                const nextWeek = new Date();
+                nextWeek.setDate(nextWeek.getDate() + 5);
+                weekOut.dueDate = nextWeek.toISOString().split('T')[0];
+                
+                const monthOut = createTask('Due in 8-30 days (blue)', task3);
+                const twoWeeks = new Date();
+                twoWeeks.setDate(twoWeeks.getDate() + 14);
+                monthOut.dueDate = twoWeeks.toISOString().split('T')[0];
+                
+                const farOut = createTask('Due in 30+ days (purple)', task3);
+                const twoMonths = new Date();
+                twoMonths.setDate(twoMonths.getDate() + 60);
+                farOut.dueDate = twoMonths.toISOString().split('T')[0];
+                
+                const task4 = createTask('Reference items (not tasks)');
+                task4.icon = '📋';
+                const ref1 = createTask('Important phone: 555-1234', task4);
+                ref1.isReference = true;
+                const ref2 = createTask('Password hint: first pet name', task4);
+                ref2.isReference = true;
+                createTask('Right-click checkbox → converts to bullet', task4);
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify({ lists, currentListIndex, nextId }, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `aurora-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        // Handle new format
+                        if (data.lists) {
+                            lists = data.lists;
+                            currentListIndex = data.currentListIndex || 0;
+                            nextId = data.nextId || 1;
+                        }
+                        // Handle old format
+                        else if (data.tasks) {
+                            lists = [{ name: '📝 Imported', tasks: data.tasks }];
+                            currentListIndex = 0;
+                            nextId = data.nextId || 1;
+                        }
+                        
+                        renderTabs();
+                        renderTasks();
+                        saveData();
+                        alert('Data imported successfully!');
+                    } catch (err) {
+                        alert('Error importing data: ' + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function clearAll() {
+            if (confirm('Clear all tasks in current list? This cannot be undone!')) {
+                setCurrentTasks([]);
+                selectedTask = null;
+                renderTasks();
+                saveData();
+            }
+        }
+
+        function loadDemoData() {
+            if (confirm('This will replace the current list with demo/example tasks. Continue?')) {
+                console.log('Loading demo data...');
+                console.log('Before clear:', getCurrentTasks().length);
+                
+                // Clear current list
+                lists[currentListIndex].tasks = [];
+                
+                console.log('After clear:', lists[currentListIndex].tasks.length);
+                
+                // Load demo
+                initDemoData();
+                
+                console.log('After initDemoData:', lists[currentListIndex].tasks.length);
+                
+                // Render and save
+                renderTasks();
+                saveData();
+            }
+        }
+
+        function resetEverything() {
+            if (confirm('This will DELETE ALL your data and restart with a fresh demo. This cannot be undone! Are you sure?')) {
+                // Clear all localStorage
+                localStorage.removeItem('aurora-tasks');
+                localStorage.removeItem('aurora-backups');
+                localStorage.removeItem('aurora-last-backup-date');
+                
+                // Reload the page to start fresh
+                location.reload();
+            }
+        }
+
+        // Auto-backup to separate localStorage key (keep last 3 backups)
+        function autoBackup() {
+            const backups = JSON.parse(localStorage.getItem('aurora-backups') || '[]');
+            const newBackup = {
+                date: new Date().toISOString(),
+                data: { lists, currentListIndex, nextId }
+            };
+            
+            backups.unshift(newBackup);
+            // Keep only last 3 backups
+            backups.splice(3);
+            
+            localStorage.setItem('aurora-backups', JSON.stringify(backups));
+        }
+
+        // Run auto-backup daily
+        const lastBackup = localStorage.getItem('aurora-last-backup-date');
+        const today = new Date().toDateString();
+        if (lastBackup !== today) {
+            autoBackup();
+            localStorage.setItem('aurora-last-backup-date', today);
+        }
+
+        // Initialize app
+        init();
+        
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            // Create inline service worker
+            const swCode = `
+                self.addEventListener('install', (e) => {
+                    self.skipWaiting();
+                });
+                
+                self.addEventListener('activate', (e) => {
+                    self.clients.claim();
+                });
+                
+                self.addEventListener('fetch', (e) => {
+                    // Let the browser handle all fetches normally
+                    return;
+                });
+            `;
+            
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swURL = URL.createObjectURL(blob);
+            
+            navigator.serviceWorker.register(swURL)
+                .then(() => console.log('Aurora PWA ready'))
+                .catch(err => console.log('PWA registration failed:', err));
+        }
+    </script>
+</body>
+</html>
