@@ -194,6 +194,7 @@
             border-radius: 4px;
             gap: 6px;
             transition: background 0.15s;
+            position: relative;
         }
 
         .task-row:hover {
@@ -246,6 +247,7 @@
             align-items: center;
             gap: 8px;
             min-width: 0;
+            width: 100%;
         }
 
         .task-text {
@@ -354,6 +356,18 @@
             flex-shrink: 0;
         }
 
+        .task-link {
+            font-size: 14px;
+            flex-shrink: 0;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .task-link:hover {
+            transform: scale(1.2);
+        }
+
         .date-input, .time-input, .icon-input {
             font-size: 11px;
             padding: 2px 4px;
@@ -363,14 +377,27 @@
         }
 
         .task-actions {
-            opacity: 0;
-            display: flex;
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            display: none;
             gap: 4px;
-            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 4px 8px;
+            align-items: center;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 10;
+            pointer-events: auto;
         }
 
         .task-row:hover .task-actions {
-            opacity: 1;
+            display: flex;
+        }
+        
+        .task-row:hover .task-actions ~ * {
+            pointer-events: none;
         }
 
         .task-actions button {
@@ -387,7 +414,7 @@
 
         .subtasks {
             list-style: none;
-            margin-left: 20px;
+            margin-left: 44px; /* Aligns subtask checkbox with parent's icon/text area */
         }
 
         .subtasks.collapsed {
@@ -415,16 +442,103 @@
         }
 
         @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
             .container {
                 padding: 15px;
             }
             
-            .task-time, .task-due-date {
-                font-size: 10px;
+            h1 {
+                font-size: 20px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .demo-toggle {
+                font-size: 12px;
+            }
+            
+            .tabs {
+                font-size: 12px;
+                gap: 3px;
+            }
+            
+            .tab {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            
+            .tab-controls button {
+                padding: 4px 8px;
+                font-size: 11px;
             }
             
             .controls {
+                gap: 5px;
+                justify-content: flex-start;
+            }
+            
+            button {
+                padding: 6px 10px;
                 font-size: 12px;
+            }
+            
+            .task-row {
+                padding: 3px 4px;
+                gap: 4px;
+            }
+            
+            .task-text {
+                font-size: 13px;
+            }
+            
+            .task-time, .task-due-date {
+                font-size: 11px;
+                padding: 1px 4px;
+            }
+            
+            .task-icon {
+                font-size: 13px;
+            }
+            
+            .task-link {
+                font-size: 13px;
+            }
+            
+            .task-actions button {
+                font-size: 10px;
+                padding: 1px 4px;
+            }
+            
+            .indent {
+                width: 15px;
+            }
+            
+            .subtasks {
+                margin-left: 38px; /* Mobile: smaller elements but same alignment goal */
+            }
+            
+            .collapse-btn {
+                width: 14px;
+                height: 14px;
+                font-size: 11px;
+            }
+            
+            input[type="checkbox"] {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .export-import h3 {
+                font-size: 14px;
+            }
+            
+            .demo-mode-banner {
+                font-size: 12px;
+                padding: 8px 10px;
             }
         }
     </style>
@@ -558,6 +672,7 @@
                 dueDate: null,
                 timeEstimate: null,
                 icon: null,
+                link: null, // New: for attaching URLs
                 subtasks: [],
                 collapsed: false
             };
@@ -737,6 +852,7 @@
                 dueDate: task.dueDate,
                 timeEstimate: task.timeEstimate,
                 icon: task.icon,
+                link: task.link,
                 subtasks: task.subtasks.map(st => copyTaskTree(st)),
                 collapsed: false
             };
@@ -801,13 +917,6 @@
                     renderTasks();
                 }
             };
-            
-            // Indentation
-            for (let i = 0; i < depth; i++) {
-                const indent = document.createElement('span');
-                indent.className = 'indent';
-                row.appendChild(indent);
-            }
             
             // Collapse button
             const collapseBtn = document.createElement('button');
@@ -877,6 +986,21 @@
                 content.appendChild(icon);
             }
             
+            // Link
+            if (task.link) {
+                const link = document.createElement('a');
+                link.className = 'task-link';
+                link.href = task.link;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.textContent = '🔗';
+                link.title = task.link;
+                link.onclick = (e) => {
+                    e.stopPropagation();
+                };
+                content.appendChild(link);
+            }
+            
             // Text
             const textInput = document.createElement('input');
             textInput.type = 'text';
@@ -924,12 +1048,20 @@
             } else {
                 due.classList.add('date-none');
             }
-            due.textContent = task.dueDate || 'no date';
+            
+            // Format date as MM-DD instead of YYYY-MM-DD
+            if (task.dueDate) {
+                const dateParts = task.dueDate.split('-');
+                due.textContent = `${dateParts[1]}-${dateParts[2]}`; // MM-DD
+            } else {
+                due.textContent = '…';
+            }
+            
             content.appendChild(due);
             
             row.appendChild(content);
             
-            // Actions
+            // Actions - append last so they overlay
             const actions = document.createElement('div');
             actions.className = 'task-actions';
             
@@ -1001,6 +1133,20 @@
                 }
             };
             actions.appendChild(setIconBtn);
+            
+            const setLinkBtn = document.createElement('button');
+            setLinkBtn.textContent = '🔗';
+            setLinkBtn.title = 'Add link';
+            setLinkBtn.onclick = (e) => {
+                e.stopPropagation();
+                const link = prompt('URL (e.g., https://example.com):', task.link || '');
+                if (link !== null) {
+                    task.link = link || null;
+                    renderTasks();
+                    saveData();
+                }
+            };
+            actions.appendChild(setLinkBtn);
             
             row.appendChild(actions);
             li.appendChild(row);
@@ -1163,7 +1309,7 @@
                 tip5.isReference = true;
                 const tip6 = createTask('Triangle (▶/▼) collapses/expands subtasks', tips);
                 tip6.isReference = true;
-                const tip7 = createTask('Hover over task to see action buttons (📅 date, ⏱️ time, ✨ icon, + Sub)', tips);
+                const tip7 = createTask('Hover over task to see action buttons (📅 date, ⏱️ time, ✨ icon, 🔗 link, + Sub)', tips);
                 tip7.isReference = true;
                 const tip8 = createTask('Date colors (task text changes color): Dark Red=overdue, Red=today, Orange=tomorrow, Green=2-7 days, Blue=8-30 days, Purple=30+ days', tips);
                 tip8.isReference = true;
