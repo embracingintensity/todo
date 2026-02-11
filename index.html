@@ -257,7 +257,10 @@
             font-size: 14px;
             padding: 2px 4px;
             outline: none;
-            min-width: 100px;
+            min-width: 50px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
         }
 
         .task-text:focus {
@@ -392,12 +395,9 @@
             pointer-events: auto;
         }
 
-        .task-row:hover .task-actions {
+        .task-due-date:hover ~ .task-actions,
+        .task-actions:hover {
             display: flex;
-        }
-        
-        .task-row:hover .task-actions ~ * {
-            pointer-events: none;
         }
 
         .task-actions button {
@@ -699,6 +699,115 @@
             saveData();
         }
 
+        function createTaskAfter(afterTask, parentTaskList = null) {
+            // Find the task in its parent's list and insert a new one after it
+            if (parentTaskList === null) {
+                parentTaskList = findParentTaskList(afterTask);
+            }
+            
+            const index = parentTaskList.findIndex(t => t.id === afterTask.id);
+            const newTask = {
+                id: nextId++,
+                text: '',
+                completed: false,
+                isReference: false,
+                dueDate: null,
+                timeEstimate: null,
+                icon: null,
+                link: null,
+                subtasks: [],
+                collapsed: false
+            };
+            
+            parentTaskList.splice(index + 1, 0, newTask);
+            return newTask;
+        }
+
+        function findParentTaskList(targetTask, taskList = null, parent = null) {
+            if (taskList === null) {
+                taskList = getCurrentTasks();
+            }
+            
+            if (taskList.some(t => t.id === targetTask.id)) {
+                return taskList;
+            }
+            
+            for (let task of taskList) {
+                const found = findParentTaskList(targetTask, task.subtasks, task);
+                if (found) return found;
+            }
+            
+            return null;
+        }
+
+        function indentTask(task) {
+            const parentList = findParentTaskList(task);
+            if (!parentList) return;
+            
+            const index = parentList.findIndex(t => t.id === task.id);
+            if (index <= 0) return; // Can't indent first item or not found
+            
+            // Remove from current position
+            parentList.splice(index, 1);
+            
+            // Add as last subtask of previous sibling
+            const previousSibling = parentList[index - 1];
+            previousSibling.subtasks.push(task);
+            previousSibling.collapsed = false;
+        }
+
+        function outdentTask(task) {
+            // Find parent of current task
+            let parentTask = null;
+            let parentList = null;
+            
+            function findParent(targetTask, currentList = getCurrentTasks(), currentParent = null) {
+                for (let t of currentList) {
+                    if (t.id === targetTask.id) {
+                        parentTask = currentParent;
+                        parentList = currentList;
+                        return true;
+                    }
+                    if (findParent(targetTask, t.subtasks, t)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            findParent(task);
+            
+            if (!parentTask) return; // Already at root level
+            
+            // Find grandparent list
+            const grandparentList = findParentTaskList(parentTask);
+            if (!grandparentList) return;
+            
+            // Remove from parent's subtasks
+            const index = parentList.findIndex(t => t.id === task.id);
+            parentList.splice(index, 1);
+            
+            // Insert after parent in grandparent list
+            const parentIndex = grandparentList.findIndex(t => t.id === parentTask.id);
+            grandparentList.splice(parentIndex + 1, 0, task);
+        }
+
+        function moveTaskBefore(taskToMove, targetTask) {
+            // Remove taskToMove from its current location
+            const sourceList = findParentTaskList(taskToMove);
+            if (!sourceList) return;
+            
+            const sourceIndex = sourceList.findIndex(t => t.id === taskToMove.id);
+            sourceList.splice(sourceIndex, 1);
+            
+            // Insert before targetTask
+            const targetList = findParentTaskList(targetTask);
+            if (!targetList) return;
+            
+            const targetIndex = targetList.findIndex(t => t.id === targetTask.id);
+            targetList.splice(targetIndex, 0, taskToMove);
+        }
+
         function deleteTask(taskToDelete, taskList = null) {
             if (taskList === null) {
                 taskList = getCurrentTasks();
@@ -813,11 +922,59 @@
             lists.forEach((list, index) => {
                 const tab = document.createElement('button');
                 tab.className = 'tab';
+                tab.draggable = true;
+                
                 if (index === currentListIndex) {
                     tab.classList.add('active');
                 }
                 tab.textContent = list.name;
                 tab.onclick = () => switchList(index);
+                
+                // Drag and drop for tabs
+                tab.ondragstart = (e) => {
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('tabIndex', index);
+                    tab.style.opacity = '0.4';
+                };
+                
+                tab.ondragend = (e) => {
+                    tab.style.opacity = '1';
+                };
+                
+                tab.ondragover = (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    tab.style.borderLeft = '3px solid #4CAF50';
+                };
+                
+                tab.ondragleave = (e) => {
+                    tab.style.borderLeft = '';
+                };
+                
+                tab.ondrop = (e) => {
+                    e.preventDefault();
+                    tab.style.borderLeft = '';
+                    
+                    const draggedIndex = parseInt(e.dataTransfer.getData('tabIndex'));
+                    if (draggedIndex !== index) {
+                        // Move tab
+                        const [draggedList] = lists.splice(draggedIndex, 1);
+                        lists.splice(index, 0, draggedList);
+                        
+                        // Update current index if needed
+                        if (currentListIndex === draggedIndex) {
+                            currentListIndex = index;
+                        } else if (draggedIndex < currentListIndex && index >= currentListIndex) {
+                            currentListIndex--;
+                        } else if (draggedIndex > currentListIndex && index <= currentListIndex) {
+                            currentListIndex++;
+                        }
+                        
+                        renderTabs();
+                        saveData();
+                    }
+                };
+                
                 tabsContainer.appendChild(tab);
             });
             
@@ -907,9 +1064,50 @@
             
             const row = document.createElement('div');
             row.className = 'task-row';
+            row.dataset.taskId = task.id;
+            row.draggable = true;
+            
             if (selectedTask && selectedTask.id === task.id) {
                 row.classList.add('selected');
             }
+            
+            // Drag and drop handlers
+            row.ondragstart = (e) => {
+                e.stopPropagation();
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('taskId', task.id);
+                row.style.opacity = '0.4';
+            };
+            
+            row.ondragend = (e) => {
+                row.style.opacity = '1';
+            };
+            
+            row.ondragover = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = 'move';
+                row.style.borderTop = '2px solid #4CAF50';
+            };
+            
+            row.ondragleave = (e) => {
+                row.style.borderTop = '';
+            };
+            
+            row.ondrop = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                row.style.borderTop = '';
+                
+                const draggedTaskId = parseInt(e.dataTransfer.getData('taskId'));
+                const draggedTask = findTask(draggedTaskId);
+                
+                if (draggedTask && draggedTask.id !== task.id) {
+                    moveTaskBefore(draggedTask, task);
+                    renderTasks();
+                    saveData();
+                }
+            };
             
             row.onclick = (e) => {
                 if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
@@ -1022,10 +1220,36 @@
             textInput.onkeydown = (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    addSubtask(task);
+                    // Create new sibling task at same level
+                    const newTask = createTaskAfter(task);
+                    renderTasks();
+                    saveData();
+                    // Focus the new task after render
+                    setTimeout(() => {
+                        const inputs = document.querySelectorAll('.task-text');
+                        const newInput = Array.from(inputs).find(input => {
+                            const taskId = parseInt(input.closest('.task-row').dataset.taskId);
+                            return taskId === newTask.id;
+                        });
+                        if (newInput) newInput.focus();
+                    }, 10);
                 } else if (e.key === 'Tab') {
                     e.preventDefault();
-                    addSubtask(task);
+                    if (e.shiftKey) {
+                        // Shift+Tab: Outdent (move up a level)
+                        outdentTask(task);
+                    } else {
+                        // Tab: Indent (make it a subtask of previous sibling)
+                        indentTask(task);
+                    }
+                    renderTasks();
+                    saveData();
+                } else if (e.key === 'Backspace' && textInput.value === '') {
+                    e.preventDefault();
+                    // Delete empty task
+                    deleteTask(task);
+                    renderTasks();
+                    saveData();
                 }
             };
             content.appendChild(textInput);
@@ -1305,16 +1529,20 @@
                 tip3.isReference = true;
                 const tip4 = createTask('Click bullet to convert back to checkbox for tasks', tips);
                 tip4.isReference = true;
-                const tip5 = createTask('Use Tab or Enter to create subtasks', tips);
+                const tip5 = createTask('Press Enter to create new task at same level, Tab to indent, Shift+Tab to outdent', tips);
                 tip5.isReference = true;
-                const tip6 = createTask('Triangle (▶/▼) collapses/expands subtasks', tips);
+                const tip6 = createTask('Backspace on empty task to delete it', tips);
                 tip6.isReference = true;
-                const tip7 = createTask('Hover over task to see action buttons (📅 date, ⏱️ time, ✨ icon, 🔗 link, + Sub)', tips);
+                const tip7 = createTask('Triangle (▶/▼) collapses/expands subtasks', tips);
                 tip7.isReference = true;
-                const tip8 = createTask('Date colors (task text changes color): Dark Red=overdue, Red=today, Orange=tomorrow, Green=2-7 days, Blue=8-30 days, Purple=30+ days', tips);
+                const tip8 = createTask('Drag and drop tasks or tabs to reorder them', tips);
                 tip8.isReference = true;
-                const tip9 = createTask('Data saves automatically in your browser', tips);
+                const tip9 = createTask('Hover over date/... to see action buttons (📅 date, ⏱️ time, ✨ icon, 🔗 link, + Sub)', tips);
                 tip9.isReference = true;
+                const tip10 = createTask('Date colors (task text changes color): Dark Red=overdue, Red=today, Orange=tomorrow, Green=2-7 days, Blue=8-30 days, Purple=30+ days', tips);
+                tip10.isReference = true;
+                const tip11 = createTask('Data saves automatically in your browser', tips);
+                tip11.isReference = true;
                 
                 const task1 = createTask('Welcome to Aurora! ✨');
                 task1.dueDate = new Date().toISOString().split('T')[0];
